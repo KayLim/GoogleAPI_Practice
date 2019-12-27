@@ -22,7 +22,7 @@ install.packages('devtools')
 #2
 test <- geocode("seoul", source="google")
 test
-register_google(key='AIzaSyAMGQtfafU0ZQdG4L42lnSgLTXNwNhflxc')
+
 install.packages("curl")
 line5
 
