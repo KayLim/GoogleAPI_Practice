@@ -1,0 +1,120 @@
+---
+title: "Untitled"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+
+library(ggmap)
+library(ggplot2)
+setwd("D:/Work_R")
+library(readxl)
+library(plyr)
+
+library(reshape)
+line5<-read_excel("line5.xlsx")
+line5
+apart<-read_excel("apartment.xlsx")
+apart
+install.packages('devtools')
+#2
+test <- geocode("seoul", source="google")
+test
+register_google(key='AIzaSyAMGQtfafU0ZQdG4L42lnSgLTXNwNhflxc')
+install.packages("curl")
+line5
+
+
+line5$지번주소 <- enc2utf8(line5$지번주소)
+line5.latlon <- geocode(line5$지번주소, source="google")
+line5.latlon <- with(line5, data.frame(지번주소, laply(지번주소, function(val){geocode(val)})))
+
+line5.latlon
+line5
+line_5<-cbind(line5, line5.latlon)
+line_5
+line_5$lon<-as.numeric(line_5$lon)
+line_5$lat<-as.numeric(line_5$lat)
+
+#3-1
+apart$`전용면적(㎡)`<-as.numeric(apart$`전용면적(㎡)`)
+apart$`전용면적(㎡)`<- round(apart$`전용면적(㎡)`)
+apart$`전용면적(㎡)`
+apart85<-apart[(apart$`전용면적(㎡)`==85),]
+
+#3-2
+
+apart85$`거래금액(만원)`<-gsub(",","",apart85$`거래금액(만원)`)
+apart85$`거래금액(만원)`
+apart85$`거래금액(만원)`<-as.numeric(apart85$`거래금액(만원)`)
+apart85$`거래금액(만원)`
+library(dplyr)
+
+new_apart<-apart85 %>%
+  group_by(단지명) %>%
+  summarise(mean(`거래금액(만원)`))
+new_apart
+names(new_apart)<- c("단지명", "평균거래가격")
+new_apart
+
+new_apart_unique = unique(new_apart)
+new_apart_unique
+
+apart1<-merge(apart85, new_apart_unique, by='단지명')
+apart1
+
+#3-3
+
+library(tidyverse)
+library(tidyr)
+apart1<-unite(data=apart1, col='주소', 시군구, 번지, sep="")
+#3-4
+apart1$주소 <- enc2utf8(apart1$주소)
+apart1.latlon <- geocode(apart1$주소, source="google")
+apart1.latlon <- with(apart1, data.frame(주소, laply(주소, function(val){geocode(val)})))
+apart1.latlon
+
+
+apart2<-cbind(apart1, apart1.latlon)
+head(apart2)
+apartment<-df(apart2$단지명, apart2$`전용면적(㎡)`, apart2$평균거래가격, apart2$주소, apart2$lon, apart2$lat)
+apart2<-apart2[,-c(3,4,6,7,9,10,11,12,13)]
+head(apart2)
+apart2$lon<-as.numeric(apart2$lon)
+apart2$lat<-as.numeric(apart2$lat)
+
+#4-1
+library(stringr)
+get_map(location = '강서구',
+        zoom = 14,
+        maptype = 'roadmap',
+        source = 'google') %>% 
+ggmap()
+
+
+
+#4-2
+library(ggplot2)
+
+library(leaflet)
+
+m <- leaflet( ) %>% 
+  addTiles() %>% 
+  addMarkers(lng = line_5$lon ,lat= line_5$lat, popup =  paste(        
+                                                      " <br> 호선: ",line_5$호선, 
+                                                      " <br> 역명: ",line_5$역명))
+m <- leaflet( ) %>% 
+  addTiles() %>% 
+  addMarkers(lng = line_5$lon ,lat= line_5$lat, popup =  paste(        
+    " <br> 호선: ",line_5$호선, 
+    " <br> 역명: ",line_5$역명), label="5호선")%>%
+  addMarkers(lng = apart2$lon ,lat= apart2$lat, popup =  paste(        
+    " <br> 단지명: ",apart2$단지명, 
+    " <br> 주소: ",apart2$주소,
+    " <br> 거래금액: ",apart2$`거래금액(만원)`), label="아파트")
+m
+
+
+```
